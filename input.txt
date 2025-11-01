@@ -1,0 +1,4 @@
+CREATE TABLE students (id INT, name TEXT);
+INSERT INTO students VALUES (1, 'Ali');
+SELECT name FROM students WHERE
+$id=1;
