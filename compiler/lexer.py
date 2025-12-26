@@ -12,7 +12,7 @@ class Lexer:
         self.line = 1
         self.column = 1
         
-        # Keywords are case-sensitive [cite: 872, 875]
+        # Keywords are case-sensitive
         self.keywords = {
             "SELECT": TokenType.SELECT,
             "FROM": TokenType.FROM,
@@ -29,7 +29,16 @@ class Lexer:
             "OR": TokenType.OR,
             "NOT": TokenType.NOT,
             
-            # Map data types to the TYPE token [cite: 877]
+            # New User/Role Keywords
+            "USER": TokenType.USER,
+            "IDENTIFIED": TokenType.IDENTIFIED,
+            "BY": TokenType.BY,
+            "GRANT": TokenType.GRANT,
+            "REVOKE": TokenType.REVOKE,
+            "ON": TokenType.ON,
+            "TO": TokenType.TO,
+
+            # Types
             "INT": TokenType.TYPE,
             "FLOAT": TokenType.TYPE,
             "TEXT": TokenType.TYPE,

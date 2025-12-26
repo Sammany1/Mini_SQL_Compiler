@@ -1,7 +1,7 @@
 from enum import Enum, auto
 
 class TokenType(Enum):
-    # Keywords
+    # --- Keywords ---
     SELECT = auto()
     FROM = auto()
     WHERE = auto()
@@ -17,15 +17,24 @@ class TokenType(Enum):
     OR = auto()
     NOT = auto()
     
-    # Data types
-    TYPE = auto() # For INT, FLOAT, TEXT
+    # New Keywords for User/Roles
+    USER = auto()
+    IDENTIFIED = auto()
+    BY = auto()
+    GRANT = auto()
+    REVOKE = auto()
+    ON = auto()
+    TO = auto()
     
-    # Identifiers & Literals
+    # --- Data types ---
+    TYPE = auto() # INT, FLOAT, TEXT
+    
+    # --- Identifiers & Literals ---
     IDENTIFIER = auto()
     NUMBER = auto()
     STRING = auto()
     
-    # Operators
+    # --- Operators ---
     EQUAL = auto()
     NOT_EQUAL = auto()
     LESS_THAN = auto()
@@ -37,15 +46,15 @@ class TokenType(Enum):
     STAR = auto()
     SLASH = auto()
     
-    # Delimiters
+    # --- Delimiters ---
     LEFT_PAREN = auto()
     RIGHT_PAREN = auto()
     COMMA = auto()
     SEMICOLON = auto()
     
-    # Special
+    # --- Special ---
     ILLEGAL = auto()
-    EOF = auto() # End-Of-File
+    EOF = auto()
 
 class Token:
     """A class to represent a token found by the Lexer."""
