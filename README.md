@@ -22,7 +22,8 @@ Mini_SQL_Compiler/
 #Installation & Usage
 
 # Clone repository
-git clone <repo-url>
+git clone repo-url
+
 cd Mini_SQL_Compiler
 
 # Run compiler
