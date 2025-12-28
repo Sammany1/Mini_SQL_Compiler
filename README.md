@@ -1,8 +1,13 @@
-Mini SQL Compiler
-A lightweight compiler for SQL-like query languages implementing lexical, syntax, and semantic analysis phases. Built from scratch in Python without external parsing libraries.
+# Mini SQL Compiler
 
-Project Structure
-text
+A lightweight compiler for a SQL-like query language implementing **lexical**, **syntax**, and **semantic** analysis phases.  
+Built from scratch in **Python**, without using external parsing libraries.
+
+---
+
+##  Project Structure
+
+```text
 Mini_SQL_Compiler/
 ├── compiler/
 │   ├── lexer.py        # Phase 1: Tokenization
@@ -14,15 +19,11 @@ Mini_SQL_Compiler/
 ├── main.py             # Compiler Pipeline
 ├── input.txt           # Sample Queries
 └── outputs/            # Generated Analysis Reports
+
 Installation & Usage
-bash
 # Clone repository
 git clone <repo-url>
 cd Mini_SQL_Compiler
 
 # Run compiler
 python main.py
-The compiler reads from input.txt and generates timestamped outputs in the outputs/ directory.
-
-License
-Educational use - Compiler Design Course Project
