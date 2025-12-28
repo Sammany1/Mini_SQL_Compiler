@@ -5,7 +5,7 @@ Built from scratch in **Python**, without using external parsing libraries.
 
 ---
 
-##  Project Structure
+## Project Structure
 
 ```text
 Mini_SQL_Compiler/
@@ -18,9 +18,9 @@ Mini_SQL_Compiler/
 │   └── errors.py       # Error Handling
 ├── main.py             # Compiler Pipeline
 ├── input.txt           # Sample Queries
-└── outputs/            # Generated Analysis Reports
+```
+#Installation & Usage
 
-Installation & Usage
 # Clone repository
 git clone <repo-url>
 cd Mini_SQL_Compiler
