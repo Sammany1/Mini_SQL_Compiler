@@ -42,3 +42,24 @@ class Grant(Statement):
 
     def __repr__(self):
         return f"Grant(privilege='{self.privilege}', table='{self.table_name}', user='{self.user_name}')"
+
+class Update(Statement):
+    def __init__(self, table_name, assignments, condition, line):
+        self.table_name = table_name
+        self.assignments = assignments  # List of (column, value) tuples
+        self.condition = condition  # Optional condition tuple or compound condition
+        self.line = line
+
+    def __repr__(self):
+        cond_str = str(self.condition) if self.condition else "None"
+        return f"Update(table='{self.table_name}', assignments={self.assignments}, condition={cond_str})"
+
+class Delete(Statement):
+    def __init__(self, table_name, condition, line):
+        self.table_name = table_name
+        self.condition = condition  # Optional condition tuple or compound condition
+        self.line = line
+
+    def __repr__(self):
+        cond_str = str(self.condition) if self.condition else "None"
+        return f"Delete(table='{self.table_name}', condition={cond_str})"

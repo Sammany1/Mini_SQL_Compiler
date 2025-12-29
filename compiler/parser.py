@@ -1,6 +1,6 @@
 from compiler.tokens import TokenType
 from compiler.errors import CompilerError
-from compiler.ast_nodes import CreateTable, Insert, Select, CreateUser, Grant
+from compiler.ast_nodes import CreateTable, Insert, Select, CreateUser, Grant, Update, Delete
 
 class Parser:
     def __init__(self, tokens):
@@ -8,10 +8,40 @@ class Parser:
         self.current = 0
 
     def parse(self):
+        """
+        Parse all statements with error recovery.
+        Uses panic mode: when an error occurs, skip tokens until a synchronizing
+        token is found, then continue parsing the rest of the input.
+        """
         statements = []
         while not self.is_at_end():
-            statements.append(self.statement())
+            try:
+                statements.append(self.statement())
+            except CompilerError as e:
+                # Report the error
+                print(f"[Syntax Error] Line {e.line}, Col {e.column}: {e.message}")
+                # Try to recover by synchronizing to next statement
+                self.synchronize()
         return statements
+    
+    def synchronize(self):
+        """
+        Error recovery: Skip tokens until we find a synchronizing token.
+        Synchronizing tokens are: SEMICOLON, CREATE, INSERT, SELECT, UPDATE, DELETE, GRANT
+        """
+        self.advance()  # Skip the current token that caused the error
+        
+        while not self.is_at_end():
+            # If we hit a semicolon, we're likely at the end of a statement
+            if self.previous().type == TokenType.SEMICOLON:
+                return
+            
+            # If we see a statement-starting keyword, we can resume parsing
+            if self.peek().type in (TokenType.CREATE, TokenType.INSERT, TokenType.SELECT,
+                                   TokenType.UPDATE, TokenType.DELETE, TokenType.GRANT):
+                return
+            
+            self.advance()
 
     def statement(self):
         if self.match(TokenType.CREATE):
@@ -32,6 +62,12 @@ class Parser:
             
         if self.match(TokenType.SELECT):
             return self.parse_select()
+            
+        if self.match(TokenType.UPDATE):
+            return self.parse_update()
+            
+        if self.match(TokenType.DELETE):
+            return self.parse_delete()
         
         # Error handling for unexpected tokens
         token = self.peek()
@@ -154,10 +190,94 @@ class Parser:
         self.consume(TokenType.SEMICOLON, "Expected ';'")
         return Select(table_name, columns, condition, start_token.line)
 
+    def parse_update(self):
+        # Syntax: UPDATE <table> SET <col> = <val>, ... [WHERE <condition>];
+        start_token = self.previous()  # The UPDATE token
+        table_name = self.consume(TokenType.IDENTIFIER, "Expected table name").lexeme
+        self.consume(TokenType.SET, "Expected 'SET' after table name")
+        
+        # Parse assignments: col1 = val1, col2 = val2, ...
+        assignments = []
+        while True:
+            col_name = self.consume(TokenType.IDENTIFIER, "Expected column name").lexeme
+            self.consume(TokenType.EQUAL, "Expected '=' after column name")
+            
+            # Parse value (NUMBER or STRING)
+            if self.match(TokenType.NUMBER) or self.match(TokenType.STRING):
+                value = self.previous()
+                assignments.append((col_name, value))
+            else:
+                token = self.peek()
+                raise CompilerError("Expected value (NUMBER or STRING)", token.line, token.column, "Syntax")
+            
+            if not self.match(TokenType.COMMA):
+                break
+        
+        # Parse optional WHERE clause
+        condition = None
+        if self.match(TokenType.WHERE):
+            condition = self.parse_condition()
+        
+        self.consume(TokenType.SEMICOLON, "Expected ';'")
+        return Update(table_name, assignments, condition, start_token.line)
+
+    def parse_delete(self):
+        # Syntax: DELETE FROM <table> [WHERE <condition>];
+        start_token = self.previous()  # The DELETE token
+        self.consume(TokenType.FROM, "Expected 'FROM' after DELETE")
+        table_name = self.consume(TokenType.IDENTIFIER, "Expected table name").lexeme
+        
+        # Parse optional WHERE clause
+        condition = None
+        if self.match(TokenType.WHERE):
+            condition = self.parse_condition()
+        
+        self.consume(TokenType.SEMICOLON, "Expected ';'")
+        return Delete(table_name, condition, start_token.line)
+
     def parse_condition(self):
-        # Simple Condition: Identifier Operator Literal (e.g., id = 1)
+        """
+        Parse condition with support for compound conditions (AND, OR, NOT).
+        Grammar: Condition -> ORCondition
+        Precedence: NOT > AND > OR (implemented using precedence climbing)
+        """
+        return self.parse_or_condition()
+    
+    def parse_or_condition(self):
+        """Parse OR conditions (lowest precedence)."""
+        condition = self.parse_and_condition()
+        
+        while self.match(TokenType.OR):
+            operator = self.previous().lexeme
+            right = self.parse_and_condition()
+            condition = ('OR', condition, right)
+        
+        return condition
+    
+    def parse_and_condition(self):
+        """Parse AND conditions (medium precedence)."""
+        condition = self.parse_not_condition()
+        
+        while self.match(TokenType.AND):
+            operator = self.previous().lexeme
+            right = self.parse_not_condition()
+            condition = ('AND', condition, right)
+        
+        return condition
+    
+    def parse_not_condition(self):
+        """Parse NOT conditions (highest precedence)."""
+        if self.match(TokenType.NOT):
+            operator = self.previous().lexeme
+            condition = self.parse_simple_condition()
+            return ('NOT', condition)
+        
+        return self.parse_simple_condition()
+    
+    def parse_simple_condition(self):
+        """Parse simple comparison condition: Identifier Operator Literal."""
         # Check for Identifier
-        left = self.consume(TokenType.IDENTIFIER, "Expected column in WHERE clause")
+        left = self.consume(TokenType.IDENTIFIER, "Expected column in condition")
         
         # Check for Operator
         operator = None
@@ -176,7 +296,7 @@ class Parser:
             token = self.peek()
             raise CompilerError("Expected value in comparison", token.line, token.column, "Syntax")
             
-        return (left, operator, right)
+        return ('COMPARE', left, operator, right)
 
     # --- Utility Methods ---
     

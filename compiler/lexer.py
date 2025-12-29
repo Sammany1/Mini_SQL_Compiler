@@ -1,4 +1,5 @@
 from .tokens import Token, TokenType
+from .errors import CompilerError
 
 class Lexer:
     """
@@ -78,7 +79,7 @@ class Lexer:
                 self.advance() # consume the '='
                 self.add_token(TokenType.NOT_EQUAL, '!=')
             else:
-                self.report_error(start_line, start_col, f"Invalid character '{char}'")
+                raise CompilerError(f"Invalid character '{char}'", start_line, start_col, "Lexical")
 
         elif char == '<':
             if self.peek() == '=':
@@ -108,8 +109,7 @@ class Lexer:
             if self.peek() == '#':
                 self.handle_multiline_comment(start_line, start_col)
             else:
-                self.report_error(start_line, start_col, f"Invalid character '{char}'")
-                self.add_token(TokenType.ILLEGAL, char)
+                raise CompilerError(f"Invalid character '{char}'", start_line, start_col, "Lexical")
                 
         # --- Whitespace (ignored) [cite: 870] ---
         elif char.isspace():
@@ -132,8 +132,7 @@ class Lexer:
         # --- Errors ---
         else:
             # Catches illegal symbols like '@' or the '$' from the sample [cite: 893-894, 909]
-            self.report_error(start_line, start_col, f"Invalid character '{char}'")
-            self.add_token(TokenType.ILLEGAL, char)
+            raise CompilerError(f"Invalid character '{char}'", start_line, start_col, "Lexical")
 
     # --- Helper Methods for Tokenization ---
 
@@ -185,10 +184,7 @@ class Lexer:
             
         # Check for unclosed string [cite: 895-896]
         if self.is_at_end():
-            self.report_error(start_line, start_col, "Unclosed string literal")
-            lexeme = self.source[start_pos - 1 : self.current_pos]
-            self.add_token(TokenType.ILLEGAL, lexeme)
-            return
+            raise CompilerError("Unclosed string literal", start_line, start_col, "Lexical")
 
         # Consume the closing '
         self.advance() 
@@ -223,7 +219,7 @@ class Lexer:
                 
         # If we exit the loop, we're at the end of the file
         # This is an unterminated comment error [cite: 897-898]
-        self.report_error(start_line, start_col, "Unterminated multi-line comment")
+        raise CompilerError("Unterminated multi-line comment", start_line, start_col, "Lexical")
 
     # --- Utility Methods ---
 
